@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>Socket-Seated Reduction Guides</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height clinical viewer — slim header, case switch, 3D stage, control strip */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --fg:#17232b; --muted:#5b6a74; --line:#d3dade;
+  --accent:#1f6f8b; --accent-ink:#ffffff; --stage:#dfe5e8;
+  --bone:#c9d9d3; --guide:#e6c98f;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10171b; --panel:#172126; --fg:#e4ecef; --muted:#93a3ab; --line:#2a383f;
+  --accent:#5fb3cf; --accent-ink:#0c1418; --stage:#0b1114; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10171b; --panel:#172126; --fg:#e4ecef; --muted:#93a3ab; --line:#2a383f;
+  --accent:#5fb3cf; --accent-ink:#0c1418; --stage:#0b1114; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);display:flex;flex-direction:column}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:14px 10px;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:end;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--panel)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:19px;font-weight:600;margin:3px 0 0;text-wrap:balance}
+.tabs{display:flex;gap:6px}
+.tabs a{font-size:13px;font-weight:500;text-decoration:none;color:var(--fg);padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.tabs a[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.stage{position:relative;flex:1;min-height:300px;background:var(--stage)}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.status{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:var(--muted);pointer-events:none}
+.caption{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;max-width:min(360px,calc(100% - 24px));font-size:13px;line-height:1.45;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.caption b{display:block;font-weight:600;margin-bottom:2px}
+.legend{display:flex;gap:12px;margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.controls{padding-block:10px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;background:var(--panel);border-top:1px solid var(--line)}
+.group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.glabel{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+button{font:500 13px var(--sans);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+input[type=range]{width:110px;accent-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);margin-left:auto}
+@media (max-width:560px){.hint{display:none}h1{font-size:17px}.caption{font-size:12px}}
+</style>
+
+</head>
+<body>
+<header class="wrap">
+  <div>
+    <div class="eyebrow">ITI World Symposium 2027 · Poster 3D models</div>
+    <h1>Socket-Seated Bone Reduction Guides</h1>
+  </div>
+  <nav class="tabs" aria-label="Case">
+    <a href="#case-1" id="tab1">Case 1 · Overdenture</a>
+    <a href="#case-2" id="tab2">Case 2 · Implant FPD</a>
+  </nav>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="3D model of the reduction guide seated on the mandible"></canvas>
+    <div class="status" id="status">Loading model…</div>
+    <div class="caption" id="caption"></div>
+  </div>
+  <div class="controls wrap">
+    <div class="group">
+      <span class="glabel">Show</span>
+      <button id="tGuide" aria-pressed="true">Guide</button>
+      <button id="tBone" aria-pressed="true">Mandible</button>
+    </div>
+    <div class="group">
+      <label class="glabel" for="opacity">Bone opacity</label>
+      <input id="opacity" type="range" min="0.15" max="1" step="0.05" value="1">
+    </div>
+    <div class="group">
+      <span class="glabel">View</span>
+      <button id="vFront">Facial</button>
+      <button id="vOcc">Occlusal</button>
+      <button id="vLat">Lateral</button>
+    </div>
+    <span class="hint">Drag to rotate · pinch or scroll to zoom</span>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const CASES={
+  'case-1':{file:'case1.json',title:'Case 1 · Mandibular implant overdenture',
+    text:'Full-arch guide registered in the extraction sockets of the remaining teeth. The window marks the planned reduction level.'},
+  'case-2':{file:'case2.json',title:'Case 2 · Implant-supported FPD',
+    text:'Segmental guide registered primarily in the canine socket. The window marks the planned reduction level.'}
+};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const stage=document.getElementById('stage'),canvas=document.getElementById('c'),statusEl=document.getElementById('status');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(35,1,1,2000);
+camera.up.set(0,0,1);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=.08;
+scene.add(new THREE.HemisphereLight(0xffffff,0x8899a0,.75));
+const key=new THREE.DirectionalLight(0xffffff,.65);camera.add(key);key.position.set(40,60,80);scene.add(camera);
+
+const boneMat=new THREE.MeshStandardMaterial({color:new THREE.Color(css('--bone')),roughness:.75,metalness:0,transparent:true,opacity:1,side:THREE.DoubleSide});
+const guideMat=new THREE.MeshStandardMaterial({color:new THREE.Color(css('--guide')),roughness:.35,metalness:0,side:THREE.DoubleSide});
+let group=null,center=new THREE.Vector3(),radius=50,cache={};
+
+function decode(p){
+  const b=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
+  const q=new Uint16Array(b(p.pos)),pos=new Float32Array(q.length);
+  for(let i=0;i<q.length;i++){const a=i%3;pos[i]=p.min[a]+q[i]*p.scale[a];}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setIndex(new THREE.BufferAttribute(new Uint32Array(b(p.idx)),1));
+  g.computeVertexNormals();return g;
+}
+async function load(id){
+  const c=CASES[id];
+  document.getElementById('tab1').setAttribute('aria-current',id==='case-1');
+  document.getElementById('tab2').setAttribute('aria-current',id==='case-2');
+  document.getElementById('caption').innerHTML='<b>'+c.title+'</b>'+c.text+
+    '<div class="legend"><span><i class="sw" style="background:var(--guide)"></i>Guide</span><span><i class="sw" style="background:var(--bone)"></i>Mandible</span></div>';
+  statusEl.hidden=false;statusEl.textContent='Loading model…';
+  try{
+    if(!cache[id]){const r=await fetch(c.file);if(!r.ok)throw 0;const d=await r.json();
+      const grp=new THREE.Group();
+      const bone=new THREE.Mesh(decode(d.bone),boneMat);bone.name='bone';bone.renderOrder=2;
+      const guide=new THREE.Mesh(decode(d.guide),guideMat);guide.name='guide';guide.renderOrder=1;
+      grp.add(guide,bone);cache[id]=grp;}
+  }catch(e){statusEl.textContent='The model could not load. Check your connection and reload.';return;}
+  if(group)scene.remove(group);group=cache[id];scene.add(group);
+  const box=new THREE.Box3().setFromObject(group);box.getCenter(center);radius=box.getSize(new THREE.Vector3()).length()/2;
+  applyToggles();setView('front');statusEl.hidden=true;
+}
+function setView(v){
+  const d=radius*2.6,dir={front:[0,-1,.35],occ:[0,-.25,1],lat:[1,-.2,.25]}[v];
+  const n=new THREE.Vector3(...dir).normalize();
+  camera.position.copy(center).addScaledVector(n,d);controls.target.copy(center);controls.update();
+}
+function applyToggles(){if(!group)return;
+  group.getObjectByName('guide').visible=document.getElementById('tGuide').getAttribute('aria-pressed')==='true';
+  group.getObjectByName('bone').visible=document.getElementById('tBone').getAttribute('aria-pressed')==='true';
+  const o=+document.getElementById('opacity').value;boneMat.opacity=o;boneMat.depthWrite=o>.99;boneMat.needsUpdate=true;}
+for(const id of ['tGuide','tBone'])document.getElementById(id).addEventListener('click',e=>{
+  const b=e.currentTarget;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');applyToggles();});
+document.getElementById('opacity').addEventListener('input',applyToggles);
+document.getElementById('vFront').onclick=()=>setView('front');
+document.getElementById('vOcc').onclick=()=>setView('occ');
+document.getElementById('vLat').onclick=()=>setView('lat');
+
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(stage);resize();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{});
+(function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+function route(){const h=location.hash.slice(1);load(CASES[h]?h:'case-1');}
+addEventListener('hashchange',route);route();
+</script>
+
+</body>
+</html>
